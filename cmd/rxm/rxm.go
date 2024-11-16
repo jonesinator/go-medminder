@@ -19,8 +19,8 @@ func handleLsAll(db *database.Database) error {
 
 	for _, value := range prescriptions {
 		fmt.Printf(
-			"Name(%s) Quantity(%f) Rate(%f) Updated(%s)\n",
-			value.Name, value.Quantity, value.Rate, value.Updated)
+			"%s - %.2f - %s\n",
+			value.Name, value.ExpectedCount(), value.RefillDate().Format("2006-01-02"))
 	}
 
 	return nil
@@ -32,10 +32,10 @@ func handleLsOne(db *database.Database, name string) error {
 		return err
 	}
 
-	fmt.Println("Name:     ", rx.Name)
-	fmt.Println("Quantity: ", rx.Quantity)
-	fmt.Println("Rate:     ", rx.Rate)
-	fmt.Println("Updated:  ", rx.Updated)
+	fmt.Printf("Name:     %s\n", rx.Name)
+	fmt.Printf("Expected: %.2f\n", rx.ExpectedCount())
+	fmt.Printf("Refill:   %s\n", rx.RefillDate().Format("2006-01-02"))
+	fmt.Printf("Updated:  %.2f on %s\n", rx.Quantity, rx.Updated.Format("2006-01-02"))
 	return nil
 }
 

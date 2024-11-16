@@ -13,6 +13,18 @@ type Prescription struct {
 	Updated  time.Time
 }
 
+func (p Prescription) ExpectedCount() float64 {
+	daysSince := int(time.Since(p.Updated).Hours()) / int(24)
+	amountConsumed := float64(daysSince) * p.Rate
+	return max(p.Quantity-amountConsumed, 0)
+}
+
+func (p Prescription) RefillDate() time.Time {
+	days := p.Quantity / p.Rate
+	endDay := p.Updated.Add(time.Duration(days) * 24 * time.Hour)
+	return endDay
+}
+
 func expectOneAffected(result sql.Result, err error, message string) error {
 	if err != nil {
 		return err
