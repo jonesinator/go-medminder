@@ -17,12 +17,20 @@ jobs:
         with:
           go-version: '1.23.x'
       - name: Run Unit Tests
-        run: go test -json ./internal/database > test-results.json
+        run: |
+          go test -coverprofile coverage.out -json ./... > test-results.json
+          go tool cover -func coverage.out
+          go tool cover -html coverage.out -o test-coverage.html
       - name: Upload Unit Test Results
         uses: actions/upload-artifact@v4
         with:
           name: test-results.json
           path: test-results.json
+      - name: Upload Coverage Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage.html
+          path: test-coverage.html
   format-check:
     runs-on: ubuntu-latest
     steps:
