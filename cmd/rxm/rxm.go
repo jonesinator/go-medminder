@@ -3,12 +3,14 @@ package main
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"jonesinator/go-medminder/internal/config"
 	"jonesinator/go-medminder/internal/database"
 	"log"
+	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 func handleLsAll(db *database.Database) error {
@@ -17,11 +19,13 @@ func handleLsAll(db *database.Database) error {
 		return err
 	}
 
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Name", "Expected Current Count", "Refill Date"})
 	for _, value := range prescriptions {
-		fmt.Printf(
-			"%s - %.2f - %s\n",
-			value.Name, value.ExpectedCount(), value.RefillDate().Format("2006-01-02"))
+		t.AppendRow(table.Row{value.Name, value.ExpectedCount(), value.RefillDate().Format("2006-01-02")})
 	}
+	t.Render()
 
 	return nil
 }
@@ -32,10 +36,19 @@ func handleLsOne(db *database.Database, name string) error {
 		return err
 	}
 
-	fmt.Printf("Name:     %s\n", rx.Name)
-	fmt.Printf("Expected: %.2f\n", rx.ExpectedCount())
-	fmt.Printf("Refill:   %s\n", rx.RefillDate().Format("2006-01-02"))
-	fmt.Printf("Updated:  %.2f on %s\n", rx.Quantity, rx.Updated.Format("2006-01-02"))
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Field", "Value"})
+	t.AppendRows([]table.Row{
+		{"Name", rx.Name},
+		{"Expected Current Count", rx.ExpectedCount()},
+		{"Refill Date", rx.RefillDate().Format("2006-01-02")},
+		{"Consumed Per Day", rx.Rate},
+		{"Updated Date", rx.Updated.Format("2006-01-02")},
+		{"Updated Quantity", rx.Quantity},
+	})
+	t.Render()
+
 	return nil
 }
 
