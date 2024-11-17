@@ -151,6 +151,10 @@ func main() {
 	}
 
 	router := SetupRouter()
+	err = router.SetTrustedProxies(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = router.Run(":8080")
 	if err != nil {
 		log.Fatal(err)
