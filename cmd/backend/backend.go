@@ -138,7 +138,6 @@ func SetupDatabase() (*database.Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer database.CloseDatabase(db)
 
 	return db, nil
 }
@@ -146,6 +145,7 @@ func SetupDatabase() (*database.Database, error) {
 func main() {
 	var err error
 	GlobalDB, err = SetupDatabase()
+	defer database.CloseDatabase(GlobalDB)
 	if err != nil {
 		log.Fatal(err)
 	}
