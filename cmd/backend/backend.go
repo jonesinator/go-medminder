@@ -12,112 +12,116 @@ import (
 	"jonesinator/go-medminder/internal/database"
 )
 
-var global_db *database.Database
+var GlobalDB *database.Database
 
-func setupRouter() *gin.Engine {
-	r := gin.Default()
+func HandleReadPrescriptions(c *gin.Context) {
+	prescriptions, err := database.ReadAllPrescriptions(GlobalDB)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	r.GET("/rx", func(c *gin.Context) {
-		prescriptions, err := database.ReadAllPrescriptions(global_db)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+	result := make([]string, len(prescriptions))
+	for i, v := range prescriptions {
+		result[i] = v.Name
+	}
 
-		result := make([]string, len(prescriptions))
-		for i, v := range prescriptions {
-			result[i] = v.Name
-		}
-
-		c.JSON(http.StatusOK, result)
-	})
-
-	r.GET("/rx/:name", func(c *gin.Context) {
-		name := c.Params.ByName("name")
-		prescription, err := database.ReadPrescription(global_db, name)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"name":     prescription.Name,
-			"count":    prescription.ExpectedCount(),
-			"refill":   prescription.RefillDate(),
-			"rate":     prescription.Rate,
-			"quantity": prescription.Quantity,
-			"updated":  prescription.Updated,
-		})
-	})
-
-	r.DELETE("/rx/:name", func(c *gin.Context) {
-		name := c.Params.ByName("name")
-		err := database.DeletePrescription(global_db, name)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{})
-	})
-
-	r.POST("/rx/:name", func(c *gin.Context) {
-		var json struct {
-			Quantity float64 `json:"quantity" binding:"required"`
-			Rate     float64 `json:"rate" binding:"required"`
-		}
-
-		name := c.Params.ByName("name")
-		err := c.Bind(&json)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		err = database.CreatePrescription(global_db, name, json.Quantity, json.Rate)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{})
-	})
-
-	r.PATCH("/rx/:name", func(c *gin.Context) {
-		var json struct {
-			Quantity float64 `json:"quantity"`
-			Rate     float64 `json:"rate"`
-		}
-
-		name := c.Params.ByName("name")
-		err := c.Bind(&json)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		if json.Quantity != 0 {
-			err = database.UpdatePrescriptionQuantity(global_db, name, json.Quantity)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-		}
-
-		if json.Rate != 0 {
-			err = database.UpdatePrescriptionRate(global_db, name, json.Rate)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-		}
-
-		c.JSON(http.StatusOK, gin.H{})
-	})
-
-	return r
+	c.JSON(http.StatusOK, result)
 }
 
-func main() {
+func HandleReadPrescription(c *gin.Context) {
+	name := c.Params.ByName("name")
+	prescription, err := database.ReadPrescription(GlobalDB, name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"name":     prescription.Name,
+		"count":    prescription.ExpectedCount(),
+		"refill":   prescription.RefillDate(),
+		"rate":     prescription.Rate,
+		"quantity": prescription.Quantity,
+		"updated":  prescription.Updated,
+	})
+}
+
+func HandleDeletePrescription(c *gin.Context) {
+	name := c.Params.ByName("name")
+	err := database.DeletePrescription(GlobalDB, name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func HandleCreatePrescription(c *gin.Context) {
+	var json struct {
+		Quantity float64 `json:"quantity" binding:"required"`
+		Rate     float64 `json:"rate" binding:"required"`
+	}
+
+	name := c.Params.ByName("name")
+	err := c.Bind(&json)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = database.CreatePrescription(GlobalDB, name, json.Quantity, json.Rate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusCreated)
+}
+
+func HandleUpdatePrescription(c *gin.Context) {
+	var json struct {
+		Quantity float64 `json:"quantity"`
+		Rate     float64 `json:"rate"`
+	}
+
+	name := c.Params.ByName("name")
+	err := c.Bind(&json)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if json.Quantity != 0 {
+		err = database.UpdatePrescriptionQuantity(GlobalDB, name, json.Quantity)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	if json.Rate != 0 {
+		err = database.UpdatePrescriptionRate(GlobalDB, name, json.Rate)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func SetupRouter() *gin.Engine {
+	router := gin.Default()
+	router.GET("/rx", HandleReadPrescriptions)
+	router.GET("/rx/:name", HandleReadPrescription)
+	router.DELETE("/rx/:name", HandleDeletePrescription)
+	router.POST("/rx/:name", HandleCreatePrescription)
+	router.PATCH("/rx/:name", HandleUpdatePrescription)
+	return router
+}
+
+func SetupDatabase() (*database.Database, error) {
 	databaseFlag := flag.String("db", "", "Path to database.")
 	flag.Parse()
 
@@ -125,20 +129,29 @@ func main() {
 	if databaseFilePath == "" {
 		configDir, err := config.GetConfigDir("go-medminder")
 		if err != nil {
-			return
+			return nil, err
 		}
 		databaseFilePath = filepath.Join(configDir, "db.sqlite3")
 	}
 
 	db, err := database.OpenDatabase(databaseFilePath)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer database.CloseDatabase(db)
-	global_db = db
 
-	r := setupRouter()
-	err = r.Run(":8080")
+	return db, nil
+}
+
+func main() {
+	var err error
+	GlobalDB, err = SetupDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	router := SetupRouter()
+	err = router.Run(":8080")
 	if err != nil {
 		log.Fatal(err)
 	}
