@@ -1,15 +1,37 @@
 # go-medminder
 
-This repository contains a simple utility for managing and tracking prescriptions. It is a work in
-progress, started primarily to learn the Go programming language.
+This repository contains a simple utility for managing and tracking prescription medications. It is
+a work in progress, started primarily to learn the Go programming language.
 
-Presently the only thing implemented is a single-user CLI program, but this can be expanded to a
-multi-user web application in the future.
+Presently a simple CLI and HTTP JSON REST API are implemented to manipulate prescription
+information.
 
 ## Usage
 
-Build and install like any Go package. The CLI program is called `rxm` (short for Prescription
-Manager). There are several subcommands:
+### API
+
+It is recommended to run the API server using a container. The `Dockerfile` in this repository
+contains the build instructions for the image. By default the API server binds port `8080`. The
+following routes are implemented:
+
+- `GET` `/rx` -- Lists all known prescription names. Returns an array of strings.
+- `GET` `/rx/:name` -- Gets detailed information about a particular prescription.
+- `POST` `/rx/:name` -- Creates a new prescription with the given name.
+  Body must look something like: `{"quantity": 123.45, "rate": 56.789 }`
+- `PATCH` `/rx/:name` -- Updates the information of the prescription with the given name.
+  Body must look something like: `{"quantity": 123.45, "rate": 56.789 }`
+  Where any combination of `quantity` and/or `rate` can be provided.
+- `DELETE` `/rx/:name` -- Deletes the prescription with the given name.
+
+In the container, the default location for the sqlite3 database is
+`/home/rxm/.config/go-medminder/db.sqlite3`. You can use a volume to expose this file or directory
+to the host filesystem.
+
+### CLI
+
+Build using `go build ./cmd/rxm`. Install using `go install ./cmd/rxm`.
+
+The CLI program is called `rxm` (short for Prescription Manager). There are several subcommands:
 
 - `rxm add [name] [quantity] [rate]` -- Adds a new prescription named `name` with `quantity` amount
   of the medication, where `rate` amount of medication is used per day.

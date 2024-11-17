@@ -55,3 +55,10 @@ Note that this design loses quantity-over-time information. This is not a great 
 is being made intentionally here so I'll have to dig myself out of it later. Might be better to have
 a table of quantity updates, so it can be tracked over time. For the initial implementation a single
 table should be fine.
+
+## 2024/11/16
+
+Took the existing CLI, and created an HTTP JSON REST API of essentially the same shape. A web
+frontend can be built over this API. It might be possible to allow the UI/API to be launched by the
+CLI, for example via `rxm ui` and it would run the backend server in the foreground and also launch
+the user's default browser to the URL needed to hit the UI.
