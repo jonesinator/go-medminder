@@ -3,8 +3,8 @@
 This repository contains a simple utility for managing and tracking prescription medications. It is
 a work in progress, started primarily to learn the Go programming language.
 
-Presently a simple CLI and HTTP JSON REST API are implemented to manipulate prescription
-information.
+Presently a simple CLI and Web UI are implemented to manipulate prescription information. The web UI
+operates over an HTTP REST API, so interactions with the service can be automated as well.
 
 ## Usage
 
@@ -26,6 +26,13 @@ following routes are implemented:
 In the container, the default location for the sqlite3 database is
 `/home/rxm/.config/go-medminder/db.sqlite3`. You can use a volume to expose this file or directory
 to the host filesystem.
+
+### Web UI
+
+With the backend running, change directory to the `frontend` directory, and run `npm run dev` to run
+the development server. Running `npm run build` will build the site.
+
+![screenshot](docs/go-medminder-screenshot.png)
 
 ### CLI
 
