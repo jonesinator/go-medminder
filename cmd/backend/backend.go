@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"jonesinator/go-medminder/internal/config"
@@ -58,6 +59,8 @@ func HandleDeletePrescription(c *gin.Context) {
 }
 
 func HandleCreatePrescription(c *gin.Context) {
+	log.Print(c.Request.Body)
+
 	var json struct {
 		Quantity float64 `json:"quantity" binding:"required"`
 		Rate     float64 `json:"rate" binding:"required"`
@@ -66,17 +69,27 @@ func HandleCreatePrescription(c *gin.Context) {
 	name := c.Params.ByName("name")
 	err := c.Bind(&json)
 	if err != nil {
+		log.Print("AAA")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = database.CreatePrescription(GlobalDB, name, json.Quantity, json.Rate)
+	var rx *database.Prescription
+	rx, err = database.CreatePrescription(GlobalDB, name, json.Quantity, json.Rate)
 	if err != nil {
+		log.Print("BBB")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.Status(http.StatusCreated)
+	c.JSON(http.StatusCreated, gin.H{
+		"name":     rx.Name,
+		"count":    rx.ExpectedCount(),
+		"refill":   rx.RefillDate(),
+		"rate":     rx.Rate,
+		"quantity": rx.Quantity,
+		"updated":  rx.Updated,
+	})
 }
 
 func HandleUpdatePrescription(c *gin.Context) {
@@ -108,16 +121,35 @@ func HandleUpdatePrescription(c *gin.Context) {
 		}
 	}
 
-	c.Status(http.StatusNoContent)
+	var rx *database.Prescription
+	rx, err = database.ReadPrescription(GlobalDB, name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"name":     rx.Name,
+		"count":    rx.ExpectedCount(),
+		"refill":   rx.RefillDate(),
+		"rate":     rx.Rate,
+		"quantity": rx.Quantity,
+		"updated":  rx.Updated,
+	})
 }
 
 func SetupRouter() *gin.Engine {
 	router := gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	router.Use(cors.New(config))
+
 	router.GET("/rx", HandleReadPrescriptions)
 	router.GET("/rx/:name", HandleReadPrescription)
 	router.DELETE("/rx/:name", HandleDeletePrescription)
 	router.POST("/rx/:name", HandleCreatePrescription)
 	router.PATCH("/rx/:name", HandleUpdatePrescription)
+
 	return router
 }
 

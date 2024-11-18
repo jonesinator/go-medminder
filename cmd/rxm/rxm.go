@@ -61,7 +61,7 @@ func handleLs(db *database.Database, name string) error {
 }
 
 func handleAdd(db *database.Database, name string, quantity float64, rate float64) error {
-	err := database.CreatePrescription(db, name, quantity, rate)
+	_, err := database.CreatePrescription(db, name, quantity, rate)
 	if err != nil {
 		return err
 	}

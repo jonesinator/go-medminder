@@ -32,7 +32,7 @@ func TestDatabaseFile(t *testing.T) {
 	}
 
 	// Creating a prescription should succeed.
-	err = CreatePrescription(db, "foo", 123.45, 12.34)
+	_, err = CreatePrescription(db, "foo", 123.45, 12.34)
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,7 +56,7 @@ func TestDatabaseFile(t *testing.T) {
 	}
 
 	// Creating a second prescription should work.
-	err = CreatePrescription(db, "bar", 543.21, 43.21)
+	_, err = CreatePrescription(db, "bar", 543.21, 43.21)
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,7 +86,7 @@ func TestDatabaseFile(t *testing.T) {
 	}
 
 	// Trying to create a prescription that already exists should fail.
-	err = CreatePrescription(db, "bar", 1, 1)
+	_, err = CreatePrescription(db, "bar", 1, 1)
 	if err.Error() != "prescription already exists" {
 		t.Error(err)
 	}

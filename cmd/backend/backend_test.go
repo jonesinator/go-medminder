@@ -64,7 +64,7 @@ func TestAPI(t *testing.T) {
 	request, _ = http.NewRequest("PATCH", "/rx/foo", bytes.NewBuffer(jsonValue))
 	recorder = httptest.NewRecorder()
 	router.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusNoContent {
+	if recorder.Code != http.StatusOK {
 		t.Error("unexpected status")
 	}
 
@@ -73,7 +73,7 @@ func TestAPI(t *testing.T) {
 	request, _ = http.NewRequest("PATCH", "/rx/foo", bytes.NewBuffer(jsonValue))
 	recorder = httptest.NewRecorder()
 	router.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusNoContent {
+	if recorder.Code != http.StatusOK {
 		t.Error("unexpected status")
 	}
 

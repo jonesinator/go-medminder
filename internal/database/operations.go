@@ -41,14 +41,19 @@ func expectOneAffected(result sql.Result, err error, message string) error {
 	return nil
 }
 
-func CreatePrescription(d *Database, name string, quantity float64, rate float64) error {
+func CreatePrescription(d *Database, name string, quantity float64, rate float64) (*Prescription, error) {
+	updated := time.Now().UTC()
 	result, err := d.db.Exec(
 		"INSERT INTO prescriptions (name, quantity, rate, updated) VALUES (?, ?, ?, ?)",
-		name, quantity, rate, time.Now().UTC())
+		name, quantity, rate, updated)
 	if err != nil && err.Error() == "UNIQUE constraint failed: prescriptions.name" {
-		return errors.New("prescription already exists")
+		return nil, errors.New("prescription already exists")
 	}
-	return expectOneAffected(result, err, "prescription already exists")
+	err = expectOneAffected(result, err, "prescription already exists")
+	if err != nil {
+		return nil, err
+	}
+	return &Prescription{name, quantity, rate, updated}, nil
 }
 
 func ReadPrescription(d *Database, name string) (*Prescription, error) {
